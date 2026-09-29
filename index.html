@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Number Pop Calculator</title>
+<style>
+  :root {
+    --yellow: #ffd93d;
+    --pink: #ff5c8a;
+    --cyan: #3ddbd9;
+    --violet: #7b5cff;
+    --lime: #b6f23d;
+    --black: #14101f;
+  }
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 1.2rem;
+    font-family: "Arial Rounded MT Bold", "Trebuchet MS", "Segoe UI", sans-serif;
+    color: var(--black);
+    background-color: var(--yellow);
+    background-image: radial-gradient(var(--black) 1.5px, transparent 1.5px);
+    background-size: 22px 22px;
+  }
+
+  form {
+    width: 100%;
+    max-width: 400px;
+    padding: 1.6rem;
+    background: #fff;
+    border: 4px solid var(--black);
+    border-radius: 22px;
+    box-shadow: 10px 10px 0 var(--black);
+    transform: rotate(-1deg);
+  }
+
+  h1 {
+    margin: 0 0 1.2rem;
+    display: inline-block;
+    padding: 0.3rem 0.9rem;
+    font-size: 1.6rem;
+    color: #fff;
+    background: var(--violet);
+    border: 3px solid var(--black);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 var(--black);
+    transform: rotate(2deg);
+  }
+
+  label.field { display: block; margin: 0.9rem 0 0.35rem; font-size: 1rem; }
+  legend { padding: 0; margin: 1.1rem 0 0.5rem; font-size: 1rem; }
+  fieldset { border: 0; margin: 0; padding: 0; }
+
+  input[type="number"] {
+    width: 100%;
+    font: inherit;
+    font-size: 1.3rem;
+    padding: 0.6rem 0.9rem;
+    color: var(--black);
+    background: #fff;
+    border: 3px solid var(--black);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 var(--cyan);
+  }
+  input[type="number"]:focus { outline: none; box-shadow: 4px 4px 0 var(--pink); }
+
+  /* Operation picker: radio buttons styled as chunky tiles */
+  .ops { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.6rem; }
+  .ops input { position: absolute; opacity: 0; pointer-events: none; }
+  .ops label {
+    display: grid;
+    place-items: center;
+    height: 3.4rem;
+    font-size: 1.8rem;
+    cursor: pointer;
+    user-select: none;
+    background: #fff;
+    border: 3px solid var(--black);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 var(--black);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .ops label:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--black); }
+  .ops input:checked + label {
+    background: var(--pink);
+    color: #fff;
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 var(--black);
+  }
+  .ops input:focus-visible + label { outline: 3px dashed var(--violet); outline-offset: 3px; }
+
+  .buttons { display: flex; gap: 0.7rem; margin-top: 1.4rem; }
+  button {
+    flex: 1;
+    font: inherit;
+    font-size: 1.1rem;
+    padding: 0.75rem;
+    cursor: pointer;
+    color: var(--black);
+    background: var(--lime);
+    border: 3px solid var(--black);
+    border-radius: 12px;
+    box-shadow: 4px 4px 0 var(--black);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  button[type="reset"] { background: var(--cyan); }
+  button:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--black); }
+  button:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--black); }
+
+  /* Result screen */
+  #result {
+    min-height: 4rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: 1.5rem;
+    color: var(--lime);
+    background: var(--black);
+    border: 3px solid var(--black);
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 3px var(--violet);
+    word-break: break-word;
+  }
+  #result.idle { color: #9a94b3; font-size: 1.05rem; }
+  #result.error { color: var(--pink); font-size: 1.05rem; }
+  #result.pop { animation: pop 0.35s ease-out; }
+  @keyframes pop {
+    0% { transform: scale(0.85); }
+    60% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) { #result.pop { animation: none; } }
+</style>
+</head>
+<body>
+  <form id="calc" novalidate>
+    <h1>Number Pop!</h1>
+
+    <label class="field" for="num1">First number</label>
+    <input id="num1" type="number" step="any" placeholder="12">
+
+    <fieldset>
+      <legend>Pick a move</legend>
+      <div class="ops">
+        <input type="radio" name="op" id="add" value="+" checked>
+        <label for="add" title="Addition">+</label>
+        <input type="radio" name="op" id="sub" value="-">
+        <label for="sub" title="Subtraction">−</label>
+        <input type="radio" name="op" id="mul" value="*">
+        <label for="mul" title="Multiplication">×</label>
+        <input type="radio" name="op" id="div" value="/">
+        <label for="div" title="Division">÷</label>
+      </div>
+    </fieldset>
+
+    <label class="field" for="num2">Second number</label>
+    <input id="num2" type="number" step="any" placeholder="4">
+
+    <div class="buttons">
+      <button type="submit">Calculate!</button>
+      <button type="reset">Clear</button>
+    </div>
+
+    <div id="result" class="idle" role="status" aria-live="polite">Your answer lands here</div>
+  </form>
+
+  <script>
+    const form = document.getElementById("calc");
+    const result = document.getElementById("result");
+    const symbols = { "+": "+", "-": "−", "*": "×", "/": "÷" };
+
+    function show(text, type) {
+      result.textContent = text;
+      result.className = type;
+      if (type === "") {
+        void result.offsetWidth;          // restart the animation
+        result.classList.add("pop");
+      }
+    }
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const a = parseFloat(document.getElementById("num1").value);
+      const b = parseFloat(document.getElementById("num2").value);
+      const op = form.elements["op"].value;
+
+      if (isNaN(a) || isNaN(b)) {
+        show("Oops! Fill in both numbers.", "error");
+        return;
+      }
+
+      let answer;
+      switch (op) {
+        case "+": answer = a + b; break;
+        case "-": answer = a - b; break;
+        case "*": answer = a * b; break;
+        case "/":
+          if (b === 0) {
+            show("Can't divide by zero. Try another number!", "error");
+            return;
+          }
+          answer = a / b;
+          break;
+      }
+
+      answer = Math.round(answer * 1e10) / 1e10;
+      show(a + " " + symbols[op] + " " + b + " = " + answer, "");
+    });
+
+    form.addEventListener("reset", function () {
+      show("Your answer lands here", "idle");
+    });
+  </script>
+</body>
+</html>
